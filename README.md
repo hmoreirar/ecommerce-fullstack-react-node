@@ -55,12 +55,14 @@ npm run dev
   - Body: `{ cart: [...], shipping: { address, city, postalCode, phone } }`
   - Valida stock, crea orden, descuenta inventario (transacción SQL)
 - `GET /orders` - Historial de órdenes del usuario (requiere auth)
+- `GET /orders/:id` - Detalle de una orden propia (requiere auth)
 
 ## Base de Datos
 
 Tablas:
 - `users` - Usuarios (id, email, password)
 - `products` - Productos (id, name, price, image, stock)
+- Los productos se desactivan mediante `active` en lugar de borrarse físicamente.
 - `orders` - Órdenes (id, user_id, total, status, shipping_address, etc.)
 - `order_items` - Items de cada orden (id, order_id, product_id, quantity, price)
 

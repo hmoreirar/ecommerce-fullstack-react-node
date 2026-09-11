@@ -14,8 +14,8 @@ export default function Spinner({ size = 'md' }: SpinnerProps) {
       style={{
         width: sizes[size],
         height: sizes[size],
-        border: '2px solid var(--border)',
-        borderTopColor: 'var(--accent)',
+        border: '2px solid var(--color-border)',
+        borderTopColor: 'var(--color-accent)',
         borderRadius: '50%',
         animation: 'spin 0.6s linear infinite',
       }}

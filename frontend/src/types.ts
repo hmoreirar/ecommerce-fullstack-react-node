@@ -4,6 +4,8 @@ export type Product = {
   price: number
   image?: string
   stock?: number
+  category: string
+  tags: string[]
 }
 
 export type CartItem = {
@@ -26,6 +28,15 @@ export type Order = {
   status: string
   created_at: string
   email?: string
+  items?: OrderItem[]
+}
+
+export type OrderItem = {
+  product_id: number
+  name?: string
+  quantity: number
+  price: number
+  image?: string
 }
 
 export type User = {

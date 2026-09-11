@@ -7,6 +7,7 @@ type LoginFormProps = {
   onEmailChange: (value: string) => void
   onPasswordChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
+  onRegister: () => void
 }
 
 export default function LoginForm({
@@ -16,6 +17,7 @@ export default function LoginForm({
   onEmailChange,
   onPasswordChange,
   onSubmit,
+  onRegister,
 }: LoginFormProps) {
   return (
     <div style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background)'}}>
@@ -60,6 +62,15 @@ export default function LoginForm({
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={onRegister}
+          style={{ width: '100%', marginTop: 12 }}
+        >
+          Crear una cuenta
+        </button>
       </div>
     </div>
   )

@@ -24,7 +24,7 @@ export default function ShippingForm({ shipping, onChange, onSubmit, onBack }: S
           />
         </div>
         
-        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+        <div className="shipping-fields" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
           <div>
             <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Ciudad</label>
             <input

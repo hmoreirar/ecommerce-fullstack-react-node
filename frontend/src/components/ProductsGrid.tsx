@@ -6,9 +6,10 @@ type ProductsGridProps = {
   isAdmin?: boolean
   onAddToCart: (product: Product) => void
   onDeleteProduct: (productId: number) => void
+  onEditProduct: (product: Product) => void
 }
 
-export default function ProductsGrid({ products, isAdmin, onAddToCart, onDeleteProduct }: ProductsGridProps) {
+export default function ProductsGrid({ products, isAdmin, onAddToCart, onDeleteProduct, onEditProduct }: ProductsGridProps) {
   if (products.length === 0) {
     return (
       <div style={{textAlign: 'center', padding: 60, color: 'var(--color-foreground-light)'}}>
@@ -29,6 +30,7 @@ export default function ProductsGrid({ products, isAdmin, onAddToCart, onDeleteP
           isAdmin={isAdmin}
           onAddToCart={onAddToCart}
           onDeleteProduct={onDeleteProduct}
+          onEditProduct={onEditProduct}
         />
       ))}
     </div>

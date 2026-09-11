@@ -1,6 +1,7 @@
 -- Agregar campos a tabla products existente
 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- Crear tabla de órdenes
 CREATE TABLE IF NOT EXISTS orders (
@@ -23,3 +24,6 @@ CREATE TABLE IF NOT EXISTS order_items (
   quantity INTEGER NOT NULL,
   price DECIMAL(10,2) NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_orders_user_created_at ON orders(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);

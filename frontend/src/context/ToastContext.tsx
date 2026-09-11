@@ -55,6 +55,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
+// The provider and its hook intentionally share this module for the app API.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {
   const ctx = useContext(ToastContext)
   if (!ctx) throw new Error('useToast must be used within ToastProvider')

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import axios from 'axios'
 import type { User, Order } from '../types'
 import { currencyFormatter } from '../utils'
 
@@ -19,12 +20,12 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   async function loadData() {
     try {
       const [usersRes, ordersRes] = await Promise.all([
-        fetch('/admin/users', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }}),
-        fetch('/admin/orders', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }})
+        axios.get('/admin/users'),
+        axios.get('/admin/orders'),
       ])
-      
-      if (usersRes.ok) setUsers(await usersRes.json())
-      if (ordersRes.ok) setOrders(await ordersRes.json())
+
+      setUsers(usersRes.data)
+      setOrders(ordersRes.data)
     } catch (err) {
       console.error(err)
     } finally {
@@ -34,14 +35,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
   async function updateOrderStatus(orderId: number, status: string) {
     try {
-      await fetch(`/admin/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ status })
-      })
+      await axios.put(`/admin/orders/${orderId}/status`, { status })
       loadData()
     } catch (err) {
       console.error(err)
@@ -50,14 +44,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
   async function updateUserRole(userId: number, role: string) {
     try {
-      await fetch(`/admin/users/${userId}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ role })
-      })
+      await axios.put(`/admin/users/${userId}/role`, { role })
       loadData()
     } catch (err) {
       console.error(err)
@@ -138,6 +125,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                           <button
                             key={status}
                             onClick={() => updateOrderStatus(order.id, status)}
+                            disabled={order.status === status}
                             style={{
                               padding: '6px 12px',
                               border: order.status === status ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
@@ -145,7 +133,8 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                               background: order.status === status ? 'var(--color-accent)' : 'transparent',
                               color: order.status === status ? '#fff' : 'var(--color-foreground)',
                               fontSize: '0.8rem',
-                              cursor: 'pointer'
+                              cursor: order.status === status ? 'not-allowed' : 'pointer',
+                              opacity: order.status === status ? 0.7 : 1
                             }}
                           >
                             {status}

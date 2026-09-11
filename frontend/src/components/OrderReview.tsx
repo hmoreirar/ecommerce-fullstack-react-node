@@ -15,7 +15,7 @@ export default function OrderReview({ cart, shipping, total, onConfirm, onBack, 
     <div style={{maxWidth: 800, margin: '0 auto'}}>
       <h2 style={{marginBottom: 24}}>Revisión de Orden</h2>
       
-      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24}}>
+      <div className="review-grid" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24}}>
         <div>
           <h3 style={{fontSize: '1rem', marginBottom: 16}}>Items</h3>
           {cart.map((item) => (

@@ -7,6 +7,23 @@ const app = express();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+function normalizeTags(tags) {
+  if (typeof tags === 'string') {
+    return tags
+      .split(',')
+      .map((tag) => tag.trim().toLowerCase().replace(/^#/, ''))
+      .filter(Boolean);
+  }
+
+  if (Array.isArray(tags) && tags.every((tag) => typeof tag === 'string')) {
+    return tags
+      .map((tag) => tag.trim().toLowerCase().replace(/^#/, ''))
+      .filter(Boolean);
+  }
+
+  return tags === undefined ? [] : null;
+}
+
 const corsOptions = {
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
@@ -55,9 +72,10 @@ app.get('/', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { email, password } = req.body;
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const { password } = req.body;
 
-  if (!email || !password) {
+  if (!email || typeof password !== 'string' || !password) {
     return res.status(400).send('Email y password requeridos');
   }
 
@@ -69,7 +87,7 @@ app.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      'INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *',
+      'INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id, email, role, created_at',
       [email, hashedPassword]
     );
 
@@ -84,9 +102,10 @@ app.post('/register', async (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const { password } = req.body;
 
-  if (!email || !password) {
+  if (!email || typeof password !== 'string' || !password) {
     return res.status(400).send('Email y password requeridos');
   }
 
@@ -122,9 +141,61 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/products', async (req, res) => {
+app.get('/me', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products');
+    const result = await pool.query(
+      'SELECT id, email, role, created_at FROM users WHERE id = $1',
+      [req.user.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send('Usuario no encontrado');
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al obtener usuario');
+  }
+});
+
+app.get('/products', async (req, res) => {
+  const { search, category, tag, minPrice, maxPrice } = req.query;
+  const values = [];
+  const conditions = ['active = TRUE'];
+
+  if (typeof search === 'string' && search.trim()) {
+    values.push(`%${search.trim()}%`);
+    conditions.push(`name ILIKE $${values.length}`);
+  }
+
+  if (typeof category === 'string' && category.trim()) {
+    values.push(category.trim().toLowerCase());
+    conditions.push(`category = $${values.length}`);
+  }
+
+  if (typeof tag === 'string' && tag.trim()) {
+    values.push(tag.trim().toLowerCase());
+    conditions.push(`$${values.length} = ANY(tags)`);
+  }
+
+  const numericMinPrice = Number(minPrice);
+  if (minPrice !== undefined && Number.isFinite(numericMinPrice) && numericMinPrice >= 0) {
+    values.push(numericMinPrice);
+    conditions.push(`price >= $${values.length}`);
+  }
+
+  const numericMaxPrice = Number(maxPrice);
+  if (maxPrice !== undefined && Number.isFinite(numericMaxPrice) && numericMaxPrice >= 0) {
+    values.push(numericMaxPrice);
+    conditions.push(`price <= $${values.length}`);
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT * FROM products WHERE ${conditions.join(' AND ')} ORDER BY id DESC`,
+      values
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -133,16 +204,20 @@ app.get('/products', async (req, res) => {
 });
 
 app.post('/products', authMiddleware, adminMiddleware, async (req, res) => {
-  const { name, price, image, stock } = req.body;
+  const { name, price, image, stock, category, tags } = req.body;
+  const numericPrice = Number(price);
+  const numericStock = Number(stock ?? 0);
+  const normalizedCategory = typeof category === 'string' ? category.trim().toLowerCase() : '';
+  const normalizedTags = normalizeTags(tags);
 
-  if (!name || !price || price <= 0) {
-    return res.status(400).send('Nombre y precio válido requeridos');
+  if (typeof name !== 'string' || !name.trim() || !Number.isFinite(numericPrice) || numericPrice <= 0 || !Number.isInteger(numericStock) || numericStock < 0 || !normalizedCategory || normalizedTags === null) {
+    return res.status(400).send('Nombre, precio, stock, categoría y etiquetas válidos requeridos');
   }
 
   try {
     const result = await pool.query(
-      'INSERT INTO products (name, price, image, stock) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name.trim(), Number(price), image || null, stock || 0]
+      'INSERT INTO products (name, price, image, stock, category, tags) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [name.trim(), numericPrice, image || null, numericStock, normalizedCategory, normalizedTags]
     );
 
     res.json(result.rows[0]);
@@ -154,12 +229,20 @@ app.post('/products', authMiddleware, adminMiddleware, async (req, res) => {
 
 app.put('/products/:id', authMiddleware, adminMiddleware, async (req, res) => {
   const { id } = req.params;
-  const { name, price, image, stock } = req.body;
+  const { name, price, image, stock, category, tags } = req.body;
+  const numericPrice = Number(price);
+  const numericStock = Number(stock);
+  const normalizedCategory = typeof category === 'string' ? category.trim().toLowerCase() : '';
+  const normalizedTags = normalizeTags(tags);
+
+  if (typeof name !== 'string' || !name.trim() || !Number.isFinite(numericPrice) || numericPrice <= 0 || !Number.isInteger(numericStock) || numericStock < 0 || !normalizedCategory || normalizedTags === null) {
+    return res.status(400).send('Nombre, precio, stock, categoría y etiquetas válidos requeridos');
+  }
 
   try {
     const result = await pool.query(
-      'UPDATE products SET name = $1, price = $2, image = $3, stock = $4 WHERE id = $5 RETURNING *',
-      [name.trim(), Number(price), image || null, stock, id]
+      'UPDATE products SET name = $1, price = $2, image = $3, stock = $4, category = $5, tags = $6 WHERE id = $7 RETURNING *',
+      [name.trim(), numericPrice, image || null, numericStock, normalizedCategory, normalizedTags, id]
     );
 
     if (result.rows.length === 0) {
@@ -177,7 +260,15 @@ app.delete('/products/:id', authMiddleware, adminMiddleware, async (req, res) =>
   const { id } = req.params;
 
   try {
-    await pool.query('DELETE FROM products WHERE id = $1', [id]);
+    const result = await pool.query(
+      'UPDATE products SET active = FALSE WHERE id = $1 AND active = TRUE RETURNING id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send('Producto no encontrado');
+    }
+
     res.sendStatus(204);
   } catch (err) {
     console.error(err);
@@ -196,6 +287,20 @@ app.post('/checkout', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Carrito vacío' });
   }
 
+  if (cart.some((item) => !Number.isInteger(Number(item.id)) || !Number.isInteger(item.quantity) || item.quantity <= 0)) {
+    return res.status(400).json({ error: 'El carrito contiene cantidades inválidas' });
+  }
+
+  const productIds = cart.map((item) => Number(item.id));
+  if (new Set(productIds).size !== productIds.length) {
+    return res.status(400).json({ error: 'El carrito contiene productos duplicados' });
+  }
+
+  if (!shipping || [shipping.address, shipping.city, shipping.postalCode, shipping.phone]
+    .some((value) => typeof value !== 'string' || !value.trim())) {
+    return res.status(400).json({ error: 'Los datos de envío son obligatorios' });
+  }
+
   const client = await pool.connect();
 
   try {
@@ -204,7 +309,7 @@ app.post('/checkout', authMiddleware, async (req, res) => {
     let total = 0;
     for (const item of cart) {
       const product = await client.query(
-        'SELECT stock, price FROM products WHERE id = $1',
+        'SELECT stock, price FROM products WHERE id = $1 FOR UPDATE',
         [item.id]
       );
 
@@ -246,7 +351,7 @@ app.post('/checkout', authMiddleware, async (req, res) => {
       );
 
       await client.query(
-        'UPDATE products SET stock = stock - $1 WHERE id = $2',
+        'UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1',
         [item.quantity, item.id]
       );
     }
@@ -281,6 +386,33 @@ app.get('/orders', authMiddleware, async (req, res) => {
   }
 });
 
+app.get('/orders/:id', authMiddleware, async (req, res) => {
+  try {
+    const orderResult = await pool.query(
+      'SELECT * FROM orders WHERE id = $1 AND user_id = $2',
+      [req.params.id, req.user.userId]
+    );
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).send('Orden no encontrada');
+    }
+
+    const itemsResult = await pool.query(
+      `SELECT oi.product_id, oi.quantity, oi.price, p.name, p.image
+       FROM order_items oi
+       LEFT JOIN products p ON p.id = oi.product_id
+       WHERE oi.order_id = $1
+       ORDER BY oi.id`,
+      [req.params.id]
+    );
+
+    res.json({ ...orderResult.rows[0], items: itemsResult.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al obtener el detalle de la orden');
+  }
+});
+
 app.get('/admin/orders', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -299,12 +431,29 @@ app.get('/admin/orders', authMiddleware, adminMiddleware, async (req, res) => {
 app.put('/admin/orders/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+  const allowedTransitions = {
+    pending: ['paid', 'cancelled'],
+    paid: ['shipped', 'cancelled'],
+    shipped: ['delivered'],
+    delivered: [],
+    cancelled: [],
+  };
 
   if (!['pending', 'paid', 'shipped', 'delivered', 'cancelled'].includes(status)) {
     return res.status(400).send('Estado inválido');
   }
 
   try {
+    const currentOrder = await pool.query('SELECT status FROM orders WHERE id = $1', [id]);
+    if (currentOrder.rows.length === 0) {
+      return res.status(404).send('Orden no encontrada');
+    }
+
+    const transitions = allowedTransitions[currentOrder.rows[0].status] || [];
+    if (!transitions.includes(status)) {
+      return res.status(409).send('Transición de estado no permitida');
+    }
+
     const result = await pool.query(
       'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
       [status, id]

@@ -31,7 +31,7 @@ export default function ConfirmDialog({
     >
       <div
         style={{
-          background: 'var(--surface)',
+          background: 'var(--color-background)',
           padding: 28,
           borderRadius: 20,
           maxWidth: 400,
@@ -40,15 +40,15 @@ export default function ConfirmDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 style={{ marginBottom: 8 }}>{title}</h3>
-        <p style={{ color: 'var(--text-muted)', marginBottom: 20 }}>{message}</p>
+        <p style={{ color: 'var(--color-foreground-light)', marginBottom: 20 }}>{message}</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button
             onClick={onCancel}
             style={{
               padding: '10px 18px',
-              border: '1px solid var(--border)',
+              border: '1px solid var(--color-border)',
               borderRadius: 12,
-              background: 'var(--secondary-surface)',
+              background: 'var(--color-surface)',
               cursor: 'pointer',
             }}
           >
@@ -61,8 +61,8 @@ export default function ConfirmDialog({
               padding: '10px 18px',
               border: 'none',
               borderRadius: 12,
-              background: 'var(--accent)',
-              color: 'var(--button-text)',
+              background: 'var(--color-accent)',
+              color: 'var(--color-button-text)',
               fontWeight: 700,
               cursor: 'pointer',
             }}

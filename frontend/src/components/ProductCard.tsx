@@ -5,6 +5,7 @@ type ProductCardProps = {
   isAdmin?: boolean
   onAddToCart: (product: Product) => void
   onDeleteProduct: (productId: number) => void
+  onEditProduct: (product: Product) => void
 }
 
 export default function ProductCard({
@@ -12,6 +13,7 @@ export default function ProductCard({
   isAdmin,
   onAddToCart,
   onDeleteProduct,
+  onEditProduct,
 }: ProductCardProps) {
   return (
     <div className="product-card">
@@ -27,6 +29,12 @@ export default function ProductCard({
 
       <div className="product-card__info">
         <h3 className="product-card__title">{product.name}</h3>
+        <p className="product-card__category">{product.category}</p>
+        {product.tags.length > 0 && (
+          <div className="product-card__tags">
+            {product.tags.map((tag) => <span key={tag}>#{tag}</span>)}
+          </div>
+        )}
         <p className="product-card__price">
           {new Intl.NumberFormat('es-CL', {
             style: 'currency',
@@ -34,16 +42,30 @@ export default function ProductCard({
             maximumFractionDigits: 0,
           }).format(product.price)}
         </p>
+        <p className="product-card__stock">
+          {product.stock && product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}
+        </p>
 
         <div className="product-card__actions">
           <button
             onClick={() => onAddToCart(product)}
             className="btn btn-primary"
+            disabled={!product.stock || product.stock <= 0}
             style={{fontSize: '0.875rem', padding: '8px 12px'}}
             type="button"
           >
             Agregar
           </button>
+          {isAdmin && (
+            <button
+              onClick={() => onEditProduct(product)}
+              className="btn btn-secondary"
+              style={{fontSize: '0.875rem', padding: '8px 12px'}}
+              type="button"
+            >
+              Editar
+            </button>
+          )}
           {isAdmin && (
             <button
               onClick={() => onDeleteProduct(product.id)}

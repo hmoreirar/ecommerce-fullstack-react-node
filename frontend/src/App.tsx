@@ -3,6 +3,7 @@ import axios from 'axios'
 import type { CartItem, Product, ShippingInfo } from './types'
 import CartSidebar from './components/CartSidebar'
 import LoginForm from './components/LoginForm'
+import RegisterForm from './components/RegisterForm'
 import ProductForm from './components/ProductForm'
 import ProductsGrid from './components/ProductsGrid'
 import CheckoutStepper from './components/CheckoutStepper'
@@ -11,16 +12,18 @@ import OrderReview from './components/OrderReview'
 import OrderConfirmation from './components/OrderConfirmation'
 import ConfirmDialog from './components/ConfirmDialog'
 import AdminDashboard from './components/AdminDashboard'
+import OrderHistory from './components/OrderHistory'
 import Spinner from './components/Spinner'
 import { useToast } from './context/ToastContext'
 
-const API_URL = 'http://localhost:3000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 axios.defaults.baseURL = API_URL
 
 function App() {
   const { addToast } = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [token, setToken] = useState(localStorage.getItem('token') || '')
   const [userRole, setUserRole] = useState<'admin' | 'client' | null>(null)
   const [theme] = useState<'light' | 'dark'>('light')
@@ -30,6 +33,16 @@ function App() {
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [image, setImage] = useState('')
+  const [stock, setStock] = useState('0')
+  const [category, setCategory] = useState('otros')
+  const [tags, setTags] = useState('')
+  const [editingProduct, setEditingProduct] = useState<number | null>(null)
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [tagFilter, setTagFilter] = useState('')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [showRegister, setShowRegister] = useState(false)
 
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -48,14 +61,37 @@ function App() {
     axios.defaults.headers.common.Authorization = `Bearer ${token}`
     setLoadingProducts(true)
 
-    axios.get('/products')
-      .then((res) => setProducts(res.data))
+    axios.get('/me')
+      .then((userRes) => setUserRole(userRes.data.role || 'client'))
+      .catch((err) => {
+        console.error(err)
+        if (err.response?.status === 401 || err.response?.status === 404) {
+          handleLogout()
+        }
+        addToast('Error al cargar usuario', 'error')
+      })
+      .finally(() => setLoadingProducts(false))
+  }, [token, addToast])
+
+  useEffect(() => {
+    if (!token) return
+
+    const params = new URLSearchParams()
+    if (search.trim()) params.set('search', search.trim())
+    if (categoryFilter) params.set('category', categoryFilter)
+    if (tagFilter.trim()) params.set('tag', tagFilter.trim())
+    if (minPrice) params.set('minPrice', minPrice)
+    if (maxPrice) params.set('maxPrice', maxPrice)
+
+    setLoadingProducts(true)
+    axios.get(`/products${params.toString() ? `?${params.toString()}` : ''}`)
+      .then((response) => setProducts(response.data))
       .catch((err) => {
         console.error(err)
         addToast('Error al cargar productos', 'error')
       })
       .finally(() => setLoadingProducts(false))
-  }, [token, addToast])
+  }, [token, search, categoryFilter, tagFilter, minPrice, maxPrice, addToast])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -70,6 +106,7 @@ function App() {
   }, [cart])
 
   const [loadingLogin, setLoadingLogin] = useState(false)
+  const [loadingRegister, setLoadingRegister] = useState(false)
   const [loadingAddProduct, setLoadingAddProduct] = useState(false)
   const [loadingCheckout, setLoadingCheckout] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
@@ -77,6 +114,7 @@ function App() {
   const [shipping, setShipping] = useState<ShippingInfo>({ address: '', city: '', postalCode: '', phone: '' })
   const [currentOrder, setCurrentOrder] = useState<{ id: number; total: number } | null>(null)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [showOrders, setShowOrders] = useState(false)
 
   const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0)
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0)
@@ -90,44 +128,106 @@ function App() {
       localStorage.setItem('token', res.data.token)
       setToken(res.data.token)
       setUserRole(res.data.role || 'client')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      addToast(err.response?.data || 'Error en login', 'error')
+      addToast(axios.isAxiosError(err) ? err.response?.data || 'Error en login' : 'Error en login', 'error')
     } finally {
       setLoadingLogin(false)
+    }
+  }
+
+  async function handleRegister(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (password !== confirmPassword) {
+      addToast('Las contraseñas no coinciden', 'error')
+      return
+    }
+
+    if (password.length < 6) {
+      addToast('La contraseña debe tener al menos 6 caracteres', 'error')
+      return
+    }
+
+    setLoadingRegister(true)
+
+    try {
+      await axios.post('/register', { email, password })
+      setPassword('')
+      setConfirmPassword('')
+      setShowRegister(false)
+      addToast('Cuenta creada. Ya puedes iniciar sesión', 'success')
+    } catch (err: unknown) {
+      console.error(err)
+      addToast(axios.isAxiosError(err) ? err.response?.data || 'Error al crear la cuenta' : 'Error al crear la cuenta', 'error')
+    } finally {
+      setLoadingRegister(false)
     }
   }
 
   async function handleAddProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!name.trim() || Number(price) <= 0) {
-      addToast('Debes ingresar un nombre y un precio válido', 'error')
+    if (!name.trim() || Number(price) <= 0 || !category.trim()) {
+      addToast('Debes ingresar nombre, precio y categoría válidos', 'error')
       return
     }
 
     setLoadingAddProduct(true)
 
     try {
-      await axios.post('/products', {
+      const payload = {
         name: name.trim(),
         price: Number(price),
         image: image.trim() || undefined,
-      })
+        stock: Number(stock),
+        category: category.trim(),
+        tags,
+      }
+      if (editingProduct) {
+        await axios.put(`/products/${editingProduct}`, payload)
+      } else {
+        await axios.post('/products', payload)
+      }
 
       setName('')
       setPrice('')
       setImage('')
+      setStock('0')
+      setCategory('otros')
+      setTags('')
+      setEditingProduct(null)
 
       const res = await axios.get('/products')
       setProducts(res.data)
-      addToast('Producto agregado', 'success')
-    } catch (err: any) {
+      addToast(editingProduct ? 'Producto actualizado' : 'Producto agregado', 'success')
+    } catch (err: unknown) {
       console.error(err)
-      addToast(err.response?.data || 'Error al crear producto', 'error')
+      addToast(axios.isAxiosError(err) ? err.response?.data || 'Error al crear producto' : 'Error al crear producto', 'error')
     } finally {
       setLoadingAddProduct(false)
     }
+  }
+
+  function handleEditProduct(product: Product) {
+    setEditingProduct(product.id)
+    setName(product.name)
+    setPrice(String(product.price))
+    setImage(product.image || '')
+    setStock(String(product.stock || 0))
+    setCategory(product.category || 'otros')
+    setTags(product.tags.join(', '))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function cancelEditProduct() {
+    setEditingProduct(null)
+    setName('')
+    setPrice('')
+    setImage('')
+    setStock('0')
+    setCategory('otros')
+    setTags('')
   }
 
   async function handleDeleteProduct(productId: number) {
@@ -151,6 +251,12 @@ function App() {
   function handleAddToCart(product: Product) {
     setCart((currentCart) => {
       const existingItem = currentCart.find((item) => item.id === product.id)
+      const currentQuantity = existingItem?.quantity || 0
+
+      if (!product.stock || currentQuantity >= product.stock) {
+        addToast('No hay más stock disponible', 'error')
+        return currentCart
+      }
 
       if (existingItem) {
         return currentCart.map((item) =>
@@ -169,7 +275,13 @@ function App() {
       currentCart
         .map((item) =>
           item.id === itemId
-            ? { ...item, quantity: item.quantity + delta }
+            ? {
+                ...item,
+                quantity: Math.min(
+                  item.quantity + delta,
+                  products.find((product) => product.id === itemId)?.stock ?? item.quantity + delta
+                ),
+              }
             : item
         )
         .filter((item) => item.quantity > 0)
@@ -196,9 +308,9 @@ function App() {
       setCheckoutStep(4)
       setCart([])
       addToast('Compra realizada 🎉', 'success')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      addToast(err.response?.data?.error || 'Error en checkout', 'error')
+      addToast(axios.isAxiosError(err) ? err.response?.data?.error || 'Error en checkout' : 'Error en checkout', 'error')
     } finally {
       setLoadingCheckout(false)
     }
@@ -218,9 +330,33 @@ function App() {
     setShowAdmin(false)
   }
 
+  function clearFilters() {
+    setSearch('')
+    setCategoryFilter('')
+    setTagFilter('')
+    setMinPrice('')
+    setMaxPrice('')
+  }
+
   const isAdmin = userRole === 'admin'
 
   if (!token) {
+    if (showRegister) {
+      return (
+        <RegisterForm
+          email={email}
+          password={password}
+          confirmPassword={confirmPassword}
+          loading={loadingRegister}
+          onEmailChange={setEmail}
+          onPasswordChange={setPassword}
+          onConfirmPasswordChange={setConfirmPassword}
+          onSubmit={handleRegister}
+          onBackToLogin={() => setShowRegister(false)}
+        />
+      )
+    }
+
     return (
       <LoginForm
         email={email}
@@ -229,12 +365,17 @@ function App() {
         onEmailChange={setEmail}
         onPasswordChange={setPassword}
         onSubmit={handleLogin}
+        onRegister={() => setShowRegister(true)}
       />
     )
   }
 
   if (showAdmin) {
     return <AdminDashboard onBack={() => setShowAdmin(false)} />
+  }
+
+  if (showOrders) {
+    return <OrderHistory onBack={() => setShowOrders(false)} />
   }
 
   if (checkoutStep > 1) {
@@ -300,6 +441,9 @@ function App() {
                 Panel Admin
               </button>
             )}
+            <button className="btn btn-secondary" onClick={() => setShowOrders(true)} type="button">
+              Mis órdenes
+            </button>
             <span style={{ color: 'var(--color-foreground-light)', fontSize: '0.9rem' }}>
               {totalItems} items en carrito
             </span>
@@ -325,25 +469,75 @@ function App() {
           </div>
 
           {isAdmin && (
-            <ProductForm
+              <ProductForm
               name={name}
               price={price}
               image={image}
               loading={loadingAddProduct}
               onNameChange={setName}
               onPriceChange={setPrice}
-              onImageChange={setImage}
-              onSubmit={handleAddProduct}
+                onImageChange={setImage}
+                stock={stock}
+                category={category}
+                tags={tags}
+                editing={editingProduct !== null}
+                onStockChange={setStock}
+                onCategoryChange={setCategory}
+                onTagsChange={setTags}
+                onCancelEdit={cancelEditProduct}
+                onSubmit={handleAddProduct}
             />
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px', alignItems: 'start' }}>
+          <div className="product-filters">
+            <input
+              className="form-input"
+              type="search"
+              placeholder="Buscar productos..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Categoría"
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value.toLowerCase())}
+            />
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Etiqueta"
+              value={tagFilter}
+              onChange={(event) => setTagFilter(event.target.value.toLowerCase().replace(/^#/, ''))}
+            />
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              placeholder="Precio mínimo"
+              value={minPrice}
+              onChange={(event) => setMinPrice(event.target.value)}
+            />
+            <input
+              className="form-input"
+              type="number"
+              min="0"
+              placeholder="Precio máximo"
+              value={maxPrice}
+              onChange={(event) => setMaxPrice(event.target.value)}
+            />
+            <button className="btn btn-secondary" type="button" onClick={clearFilters}>Limpiar</button>
+          </div>
+
+          <div className="store-layout">
             <section>
               <ProductsGrid
                 products={products}
                 isAdmin={isAdmin}
                 onAddToCart={handleAddToCart}
                 onDeleteProduct={confirmDelete}
+                onEditProduct={handleEditProduct}
               />
             </section>
 
