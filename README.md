@@ -1,8 +1,16 @@
-# Ecommerce Fullstack
+# Nicommerce
 
-App ecommerce con:
-- React (frontend) - Diseño tipo Shopify
-- Node.js + Express (backend) - PostgreSQL (DB)
+Ecommerce fullstack orientado a una experiencia de compra clara y realista: autenticación, catálogo administrable, carrito persistente y checkout transaccional con PostgreSQL.
+
+## Stack
+
+- React 19 + TypeScript + Vite
+- Node.js + Express 5
+- PostgreSQL
+- JWT + bcrypt
+- Axios
+
+## Funcionalidades
 
 ## Features
 - Auth (JWT)
@@ -10,15 +18,18 @@ App ecommerce con:
 - Carrito con persistencia localStorage
 - **Checkout multi-step**: Carrito → Envío → Revisión → Confirmación
 - Procesamiento real de órdenes en PostgreSQL
-- Dark/Light mode desactivado temporalmente
+- Modo claro/oscuro persistente
+- Filtros por búsqueda, categoría, etiquetas y precio
+- Panel de administración para productos, usuarios y órdenes
+- Historial y detalle de órdenes
+- Validación de stock dentro de una transacción SQL
 
 ## Cómo correr
 
 ### 1. Base de datos (PostgreSQL)
 ```bash
-# Ejecutar migración (usa pgAdmin o psql)
+# Ejecutar la migración desde la base de datos creada
 psql -U postgres -d ecommerce -f backend/migrations.sql
-# Password: jajaja123
 ```
 
 ### 2. Backend:
@@ -35,9 +46,28 @@ npm run dev
 # App en http://localhost:5173
 ```
 
-## Flujo de Compra
+## Configuración
 
-1. **Registro/Login** → Usa test@test.com / 123456 (ya creado)
+1. Copia `backend/.env.example` a `backend/.env`.
+2. Completa las credenciales de PostgreSQL y un `JWT_SECRET` largo y aleatorio.
+3. Ejecuta la migración.
+
+Variables principales:
+
+```env
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=ecommerce
+DB_PASSWORD=tu_password_local
+DB_PORT=5432
+JWT_SECRET=un_secreto_largo_y_aleatorio
+PORT=3000
+FRONTEND_URL=http://localhost:5173
+```
+
+## Flujo de compra
+
+1. **Registro/Login** → Crea una cuenta desde la pantalla de registro
 2. **Agregar productos** → Formulario en la página principal
 3. **Carrito** → Sidebar derecho, botón "Finalizar Compra"
 4. **Envío** → Formulario: dirección, ciudad, código postal, teléfono
@@ -66,8 +96,14 @@ Tablas:
 - `orders` - Órdenes (id, user_id, total, status, shipping_address, etc.)
 - `order_items` - Items de cada orden (id, order_id, product_id, quantity, price)
 
-## Credenciales de prueba
+## Pruebas manuales
 
-- **Email**: test@test.com
-- **Password**: 123456
-- **DB Password**: jajaja123
+Con el backend activo, puedes ejecutar el flujo completo usando credenciales definidas en tu entorno:
+
+```bash
+TEST_EMAIL=tu_correo TEST_PASSWORD=tu_password ./test-flow.sh
+```
+
+## Estado del proyecto
+
+Este proyecto está preparado como pieza de portafolio. El checkout no procesa pagos reales; crea órdenes y actualiza inventario dentro de PostgreSQL. Una siguiente iteración podría integrar un proveedor de pagos y despliegue automatizado.

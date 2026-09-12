@@ -1,13 +1,19 @@
 #!/bin/bash
 
+set -euo pipefail
+
+API_URL="${API_URL:-http://localhost:3000}"
+TEST_EMAIL="${TEST_EMAIL:?Define TEST_EMAIL para ejecutar el flujo}"
+TEST_PASSWORD="${TEST_PASSWORD:?Define TEST_PASSWORD para ejecutar el flujo}"
+
 echo "=== Prueba del Flujo de Compra ==="
 echo ""
 
 # 1. Login
 echo "1. Haciendo login..."
-LOGIN_RESPONSE=$(curl -s -X POST http://localhost:3000/login \
+LOGIN_RESPONSE=$(curl -fsS -X POST "$API_URL/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@test.com","password":"123456"}')
+  -d "{\"email\":\"$TEST_EMAIL\",\"password\":\"$TEST_PASSWORD\"}")
 
 TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
@@ -23,7 +29,7 @@ echo ""
 
 # 2. Obtener productos
 echo "2. Obteniendo productos..."
-PRODUCTS=$(curl -s http://localhost:3000/products \
+PRODUCTS=$(curl -fsS "$API_URL/products" \
   -H "Authorization: Bearer $TOKEN")
 
 PRODUCT_ID=$(echo $PRODUCTS | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
@@ -35,7 +41,7 @@ echo ""
 
 # 3. Checkout
 echo "3. Procesando checkout..."
-CHECKOUT_RESPONSE=$(curl -s -X POST http://localhost:3000/checkout \
+CHECKOUT_RESPONSE=$(curl -fsS -X POST "$API_URL/checkout" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d "{\"cart\":[{\"id\":$PRODUCT_ID,\"name\":\"$PRODUCT_NAME\",\"price\":100,\"quantity\":2}],\"shipping\":{\"address\":\"Calle Falsa 123\",\"city\":\"Santiago\",\"postalCode\":\"8320000\",\"phone\":\"+56912345678\"}}")
