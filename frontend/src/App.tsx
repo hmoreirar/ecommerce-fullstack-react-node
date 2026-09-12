@@ -45,6 +45,7 @@ function App() {
   const [tagFilter, setTagFilter] = useState('')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -126,6 +127,7 @@ function App() {
 
   const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0)
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0)
+  const activeFilterCount = [categoryFilter, tagFilter, minPrice, maxPrice].filter(Boolean).length
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -498,7 +500,7 @@ function App() {
             />
           )}
 
-          <div className="product-filters">
+          <div className="catalog-toolbar">
             <input
               className="form-input"
               type="search"
@@ -506,6 +508,20 @@ function App() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
+            <button
+              className="btn btn-secondary filters-toggle"
+              type="button"
+              aria-expanded={showFilters}
+              aria-controls="advanced-filters"
+              onClick={() => setShowFilters((visible) => !visible)}
+            >
+              Filtros{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              <span aria-hidden="true">{showFilters ? '−' : '+'}</span>
+            </button>
+          </div>
+
+          {showFilters && (
+            <div className="product-filters" id="advanced-filters">
             <input
               className="form-input"
               type="text"
@@ -537,7 +553,8 @@ function App() {
               onChange={(event) => setMaxPrice(event.target.value)}
             />
             <button className="btn btn-secondary" type="button" onClick={clearFilters}>Limpiar</button>
-          </div>
+            </div>
+          )}
 
           <div className="store-layout">
             <section>

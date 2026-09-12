@@ -670,6 +670,24 @@ select:focus-visible {
   background: var(--color-surface);
 }
 
+.catalog-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.filters-toggle {
+  min-width: 112px;
+  gap: 10px;
+}
+
+.filters-toggle span {
+  color: var(--color-accent);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
 .product-card__category {
   margin: 0 0 8px;
   color: var(--color-foreground-light);
@@ -699,6 +717,10 @@ select:focus-visible {
 }
 
 @media (max-width: 560px) {
+  .catalog-toolbar {
+    grid-template-columns: 1fr;
+  }
+
   .product-filters {
     grid-template-columns: 1fr;
   }
