@@ -468,12 +468,11 @@ function App() {
         <div className="container">
           <div className="section-header">
             <div>
-              <p className="eyebrow">{isAdmin ? 'GESTIÓN DE TIENDA' : 'OBJETOS PARA TU DÍA A DÍA'}</p>
-              <h1>{isAdmin ? 'Panel de Administración' : 'Compra menos. Elige mejor.'}</h1>
+              <h1>{isAdmin ? 'Panel de Administración' : 'Productos'}</h1>
               <p className="section-description">
                 {isAdmin
                   ? 'Gestiona tus productos e inventario'
-                  : 'Descubre una selección curada de productos funcionales, bonitos y hechos para durar.'}
+                  : 'Explora el catálogo y encuentra lo que necesitas.'}
               </p>
             </div>
             <span className="badge">{products.length} productos</span>
