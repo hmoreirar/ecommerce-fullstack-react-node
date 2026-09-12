@@ -11,8 +11,6 @@ Ecommerce fullstack orientado a una experiencia de compra clara y realista: aute
 - Axios
 
 ## Funcionalidades
-
-## Features
 - Auth (JWT)
 - CRUD productos
 - Carrito con persistencia localStorage
@@ -68,7 +66,7 @@ FRONTEND_URL=http://localhost:5173
 ## Flujo de compra
 
 1. **Registro/Login** → Crea una cuenta desde la pantalla de registro
-2. **Agregar productos** → Formulario en la página principal
+2. **Agregar productos** → Un administrador puede crear productos desde el panel
 3. **Carrito** → Sidebar derecho, botón "Finalizar Compra"
 4. **Envío** → Formulario: dirección, ciudad, código postal, teléfono
 5. **Revisión** → Resumen de items + envío + total
@@ -103,6 +101,14 @@ Con el backend activo, puedes ejecutar el flujo completo usando credenciales def
 ```bash
 TEST_EMAIL=tu_correo TEST_PASSWORD=tu_password ./test-flow.sh
 ```
+
+Para probar el panel de administración, registra una cuenta y cambia su rol desde PostgreSQL:
+
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'tu_correo';
+```
+
+El rol debe cambiarse solo en entornos locales o de demostración.
 
 ## Estado del proyecto
 

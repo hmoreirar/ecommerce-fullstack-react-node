@@ -35,6 +35,11 @@ PRODUCTS=$(curl -fsS "$API_URL/products" \
 PRODUCT_ID=$(echo $PRODUCTS | grep -o '"id":[0-9]*' | head -1 | cut -d':' -f2)
 PRODUCT_NAME=$(echo $PRODUCTS | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
 
+if [ -z "$PRODUCT_ID" ] || [ -z "$PRODUCT_NAME" ]; then
+  echo "Error: no hay productos disponibles para probar el checkout"
+  exit 1
+fi
+
 echo "✓ Productos obtenidos"
 echo "  ID: $PRODUCT_ID, Nombre: $PRODUCT_NAME"
 echo ""
