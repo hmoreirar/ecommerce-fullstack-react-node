@@ -14,6 +14,7 @@ import ConfirmDialog from './components/ConfirmDialog'
 import AdminDashboard from './components/AdminDashboard'
 import OrderHistory from './components/OrderHistory'
 import Spinner from './components/Spinner'
+import ThemeToggle from './components/ThemeToggle'
 import { useToast } from './context/ToastContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -26,7 +27,9 @@ function App() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [token, setToken] = useState(localStorage.getItem('token') || '')
   const [userRole, setUserRole] = useState<'admin' | 'client' | null>(null)
-  const [theme] = useState<'light' | 'dark'>('light')
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (
+    localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'
+  ))
 
   const [products, setProducts] = useState<Product[]>([])
   const [loadingProducts, setLoadingProducts] = useState(false)
@@ -95,7 +98,12 @@ function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
+    localStorage.setItem('theme', theme)
   }, [theme])
+
+  function toggleTheme() {
+    setTheme((currentTheme) => currentTheme === 'light' ? 'dark' : 'light')
+  }
 
   useEffect(() => {
     try {
@@ -383,7 +391,8 @@ function App() {
       <div>
         <header className="site-header">
           <div className="container header-wrapper">
-            <a href="/" className="header-logo">Nicommerce</a>
+            <a href="/" className="header-logo"><span className="header-logo__mark">N</span> Nicommerce</a>
+            <ThemeToggle theme={theme} onToggleTheme={toggleTheme} />
           </div>
         </header>
 
@@ -430,8 +439,9 @@ function App() {
 
       <header className="site-header">
         <div className="container header-wrapper">
-          <a href="/" className="header-logo">Nicommerce</a>
+          <a href="/" className="header-logo"><span className="header-logo__mark">N</span> Nicommerce</a>
           <div className="header-actions">
+            <ThemeToggle theme={theme} onToggleTheme={toggleTheme} />
             {isAdmin && (
               <button
                 className="btn btn-secondary"
@@ -444,9 +454,7 @@ function App() {
             <button className="btn btn-secondary" onClick={() => setShowOrders(true)} type="button">
               Mis órdenes
             </button>
-            <span style={{ color: 'var(--color-foreground-light)', fontSize: '0.9rem' }}>
-              {totalItems} items en carrito
-            </span>
+            <span className="cart-count">{totalItems} {totalItems === 1 ? 'item' : 'items'} en carrito</span>
             <button className="btn btn-secondary" onClick={handleLogout} type="button">
               Logout
             </button>
@@ -458,11 +466,12 @@ function App() {
         <div className="container">
           <div className="section-header">
             <div>
-              <h1>{isAdmin ? 'Panel de Administración' : 'Catálogo de Productos'}</h1>
-              <p style={{ color: 'var(--color-foreground-light)', marginTop: '4px' }}>
+              <p className="eyebrow">{isAdmin ? 'GESTIÓN DE TIENDA' : 'OBJETOS PARA TU DÍA A DÍA'}</p>
+              <h1>{isAdmin ? 'Panel de Administración' : 'Compra menos. Elige mejor.'}</h1>
+              <p className="section-description">
                 {isAdmin
                   ? 'Gestiona tus productos e inventario'
-                  : 'Descubre nuestra selección de productos'}
+                  : 'Descubre una selección curada de productos funcionales, bonitos y hechos para durar.'}
               </p>
             </div>
             <span className="badge">{products.length} productos</span>

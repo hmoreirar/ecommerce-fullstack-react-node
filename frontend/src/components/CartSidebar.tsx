@@ -21,11 +21,17 @@ export default function CartSidebar({
 }: CartSidebarProps) {
   return (
     <aside className="cart-sidebar">
-      <h2 style={{fontSize: '1.25rem', marginBottom: 20}}>Carrito de Compras</h2>
+      <div className="cart-sidebar__heading">
+        <div>
+          <p className="eyebrow">TU SELECCIÓN</p>
+          <h2>Carrito de compras</h2>
+        </div>
+        <span className="cart-sidebar__count">{totalItems}</span>
+      </div>
 
       {cart.length === 0 ? (
-        <p style={{color: 'var(--color-foreground-light)', fontSize: '0.9rem', textAlign: 'center', padding: 20}}>
-          Tu carrito está vacío
+        <p className="cart-empty">
+          Tu carrito está vacío.<br /><span>Agrega algo que te guste para empezar.</span>
         </p>
       ) : (
         <div>
@@ -39,15 +45,16 @@ export default function CartSidebar({
               </div>
 
               <div className="quantity-controls">
-                <button onClick={() => onUpdateQuantity(item.id, -1)} type="button">-</button>
+                 <button onClick={() => onUpdateQuantity(item.id, -1)} type="button" aria-label={`Reducir cantidad de ${item.name}`}>-</button>
                 <span>{item.quantity}</span>
-                <button onClick={() => onUpdateQuantity(item.id, 1)} type="button">+</button>
+                 <button onClick={() => onUpdateQuantity(item.id, 1)} type="button" aria-label={`Aumentar cantidad de ${item.name}`}>+</button>
               </div>
 
               <button
                 onClick={() => onRemoveItem(item.id)}
-                style={{background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', fontSize: '0.875rem'}}
-                type="button"
+                 style={{background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', fontSize: '0.875rem'}}
+                 type="button"
+                 aria-label={`Eliminar ${item.name} del carrito`}
               >
                 Eliminar
               </button>

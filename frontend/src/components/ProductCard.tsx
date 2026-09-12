@@ -16,13 +16,13 @@ export default function ProductCard({
   onEditProduct,
 }: ProductCardProps) {
   return (
-    <div className="product-card">
+    <article className="product-card">
       <div className="product-card__image">
         {product.image ? (
           <img src={product.image} alt={product.name} />
         ) : (
           <div className="product-card__image--placeholder">
-            Sin imagen
+            <span>Imagen próximamente</span>
           </div>
         )}
       </div>
@@ -51,16 +51,16 @@ export default function ProductCard({
             onClick={() => onAddToCart(product)}
             className="btn btn-primary"
             disabled={!product.stock || product.stock <= 0}
-            style={{fontSize: '0.875rem', padding: '8px 12px'}}
+            aria-label={`Agregar ${product.name} al carrito`}
             type="button"
           >
-            Agregar
+            {product.stock && product.stock > 0 ? 'Agregar al carrito' : 'Agotado'}
           </button>
           {isAdmin && (
             <button
               onClick={() => onEditProduct(product)}
               className="btn btn-secondary"
-              style={{fontSize: '0.875rem', padding: '8px 12px'}}
+              aria-label={`Editar ${product.name}`}
               type="button"
             >
               Editar
@@ -70,7 +70,7 @@ export default function ProductCard({
             <button
               onClick={() => onDeleteProduct(product.id)}
               className="btn btn-secondary"
-              style={{fontSize: '0.875rem', padding: '8px 12px', color: 'var(--color-error)'}}
+              aria-label={`Eliminar ${product.name}`}
               type="button"
             >
               Eliminar
@@ -78,6 +78,6 @@ export default function ProductCard({
           )}
         </div>
       </div>
-    </div>
+    </article>
   )
 }
