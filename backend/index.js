@@ -2,10 +2,16 @@ require('dotenv').config();
 const pool = require('./db');
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 
 const app = express();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET debe existir y tener al menos 32 caracteres');
+}
 
 function normalizeTags(tags) {
   if (typeof tags === 'string') {
@@ -29,7 +35,16 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(helmet());
+app.use(express.json({ limit: '100kb' }));
+
+const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: 'Demasiados intentos. Intenta nuevamente más tarde.',
+});
 
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -71,7 +86,7 @@ app.get('/', (req, res) => {
   res.send('API funcionando correctamente');
 });
 
-app.post('/register', async (req, res) => {
+app.post('/register', authRateLimit, async (req, res) => {
   const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   const { password } = req.body;
 
@@ -101,7 +116,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', authRateLimit, async (req, res) => {
   const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
   const { password } = req.body;
 
@@ -118,13 +133,13 @@ app.post('/login', async (req, res) => {
     const user = result.rows[0];
 
     if (!user) {
-      return res.status(401).send('Usuario no existe');
+      return res.status(401).send('Credenciales inválidas');
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
-      return res.status(401).send('Password incorrecto');
+      return res.status(401).send('Credenciales inválidas');
     }
 
     const token = jwt.sign(
