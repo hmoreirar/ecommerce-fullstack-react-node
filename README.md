@@ -1,115 +1,193 @@
 # Nicommerce
 
-Ecommerce fullstack orientado a una experiencia de compra clara y realista: autenticación, catálogo administrable, carrito persistente y checkout transaccional con PostgreSQL.
+Nicommerce es un ecommerce fullstack orientado a una experiencia de compra clara y realista: autenticacion, catalogo administrable, carrito persistente y checkout transaccional con PostgreSQL.
+
+## Demo
+
+> El checkout crea ordenes y actualiza inventario, pero no procesa pagos reales.
+
+### Capturas
+
+Las capturas se organizan en `docs/screenshots/`. Agrega imagenes con estos nombres cuando las generes desde la aplicacion local:
+
+| Vista | Archivo |
+| --- | --- |
+| Catalogo | `docs/screenshots/catalog.png` |
+| Carrito | `docs/screenshots/cart.png` |
+| Checkout | `docs/screenshots/checkout.png` |
+| Confirmacion | `docs/screenshots/order-confirmation.png` |
+| Administracion | `docs/screenshots/admin.png` |
+
+El repositorio incluye la estructura de la demo y no publica credenciales ni una URL de despliegue ficticia.
 
 ## Stack
 
-- React 19 + TypeScript + Vite
-- Node.js + Express 5
+- React 19, TypeScript y Vite
+- Node.js y Express 5
 - PostgreSQL
-- JWT + bcrypt
+- JWT y bcrypt
 - Axios
 
 ## Funcionalidades
-- Auth (JWT)
-- CRUD productos
-- Carrito con persistencia localStorage
-- **Checkout multi-step**: Carrito → Envío → Revisión → Confirmación
-- Procesamiento real de órdenes en PostgreSQL
+
+- Registro y autenticacion con JWT
+- Catalogo con busqueda, categorias, etiquetas y rango de precios
+- Carrito persistido en `localStorage`
+- Checkout multi-step: carrito, envio, revision y confirmacion
+- Creacion de ordenes e inventario transaccional en PostgreSQL
+- Panel de administracion para productos, usuarios y ordenes
+- Historial y detalle de ordenes
 - Modo claro/oscuro persistente
-- Filtros por búsqueda, categoría, etiquetas y precio
-- Panel de administración para productos, usuarios y órdenes
-- Historial y detalle de órdenes
-- Validación de stock dentro de una transacción SQL
+- Rate limiting, Helmet y validaciones de backend
 
-## Cómo correr
+## Requisitos
 
-### 1. Base de datos (PostgreSQL)
+- Node.js 18+
+- PostgreSQL 14+
+- `psql` disponible en el PATH
+
+## Instalacion local
+
+### 1. Crear la base de datos
+
 ```bash
-# Ejecutar la migración desde la base de datos creada
+createdb ecommerce
 psql -U postgres -d ecommerce -f backend/migrations.sql
+psql -U postgres -d ecommerce -f backend/seed.sql
 ```
 
-### 2. Backend:
+Si la base de datos ya existe, omite `createdb`.
+
+### 2. Configurar el backend
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Edita `backend/.env` con tus valores locales. Nunca subas ese archivo a GitHub. Genera un secreto JWT seguro con:
+
+```bash
+openssl rand -base64 32
+```
+
+Variables disponibles:
+
+| Variable | Uso |
+| --- | --- |
+| `DB_USER` | Usuario de PostgreSQL |
+| `DB_HOST` | Host de PostgreSQL |
+| `DB_NAME` | Nombre de la base de datos |
+| `DB_PASSWORD` | Contrasena local de PostgreSQL |
+| `DB_PORT` | Puerto de PostgreSQL |
+| `JWT_SECRET` | Secreto para firmar tokens, minimo 32 caracteres |
+| `PORT` | Puerto de la API |
+| `FRONTEND_URL` | Origen permitido por CORS |
+
+### 3. Instalar y ejecutar
+
+En una terminal:
+
 ```bash
 cd backend
+npm install
 npm run dev
-# Servidor en http://localhost:3000
 ```
 
-### 3. Frontend:
+En otra terminal:
+
 ```bash
 cd frontend
+npm install
 npm run dev
-# App en http://localhost:5173
 ```
 
-## Configuración
+- API: `http://localhost:3000`
+- Frontend: `http://localhost:5173`
 
-1. Copia `backend/.env.example` a `backend/.env`.
-2. Completa las credenciales de PostgreSQL y un `JWT_SECRET` largo y aleatorio.
-3. Ejecuta la migración.
+## Datos de prueba
 
-Variables principales:
+`backend/seed.sql` agrega productos de demostracion y puede ejecutarse varias veces sin duplicarlos.
 
-```env
-DB_USER=postgres
-DB_HOST=localhost
-DB_NAME=ecommerce
-DB_PASSWORD=tu_password_local
-DB_PORT=5432
-JWT_SECRET=un_secreto_largo_y_aleatorio
-PORT=3000
-FRONTEND_URL=http://localhost:5173
-```
-
-## Flujo de compra
-
-1. **Registro/Login** → Crea una cuenta desde la pantalla de registro
-2. **Agregar productos** → Un administrador puede crear productos desde el panel
-3. **Carrito** → Sidebar derecho, botón "Finalizar Compra"
-4. **Envío** → Formulario: dirección, ciudad, código postal, teléfono
-5. **Revisión** → Resumen de items + envío + total
-6. **Confirmación** → ¡Orden creada! Número de orden generado
-
-## Endpoints Backend
-
-- `POST /register` - Registro de usuario
-- `POST /login` - Login (devuelve JWT)
-- `GET /products` - Listar productos (requiere auth)
-- `POST /products` - Crear producto (requiere auth)
-- `DELETE /products/:id` - Eliminar producto (requiere auth)
-- `POST /checkout` - Procesar orden (requiere auth)
-  - Body: `{ cart: [...], shipping: { address, city, postalCode, phone } }`
-  - Valida stock, crea orden, descuenta inventario (transacción SQL)
-- `GET /orders` - Historial de órdenes del usuario (requiere auth)
-- `GET /orders/:id` - Detalle de una orden propia (requiere auth)
-
-## Base de Datos
-
-Tablas:
-- `users` - Usuarios (id, email, password)
-- `products` - Productos (id, name, price, image, stock)
-- Los productos se desactivan mediante `active` en lugar de borrarse físicamente.
-- `orders` - Órdenes (id, user_id, total, status, shipping_address, etc.)
-- `order_items` - Items de cada orden (id, order_id, product_id, quantity, price)
-
-## Pruebas manuales
-
-Con el backend activo, puedes ejecutar el flujo completo usando credenciales definidas en tu entorno:
+Los usuarios se crean desde la pantalla de registro o mediante la API:
 
 ```bash
-TEST_EMAIL=tu_correo TEST_PASSWORD=tu_password ./test-flow.sh
+curl -X POST http://localhost:3000/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"demo@example.com","password":"demo-password-123"}'
 ```
 
-Para probar el panel de administración, registra una cuenta y cambia su rol desde PostgreSQL:
+Para probar el panel administrativo, cambia el rol de un usuario local:
 
 ```sql
-UPDATE users SET role = 'admin' WHERE email = 'tu_correo';
+UPDATE users SET role = 'admin' WHERE email = 'demo@example.com';
 ```
 
-El rol debe cambiarse solo en entornos locales o de demostración.
+El cambio de rol debe hacerse solo en entornos locales o de demostracion.
 
-## Estado del proyecto
+## Arquitectura del checkout
 
-Este proyecto está preparado como pieza de portafolio. El checkout no procesa pagos reales; crea órdenes y actualiza inventario dentro de PostgreSQL. Una siguiente iteración podría integrar un proveedor de pagos y despliegue automatizado.
+### Frontend
+
+1. El usuario agrega productos al carrito; el estado se persiste en `localStorage`.
+2. `ShippingForm` recopila direccion, ciudad, codigo postal y telefono.
+3. `OrderReview` muestra los items y los datos de envio antes de confirmar.
+4. La confirmacion envia `cart` y `shipping` a `POST /checkout`.
+5. La respuesta devuelve el identificador y total de la orden; el carrito se limpia y se muestra la confirmacion.
+
+### Backend y PostgreSQL
+
+1. `authMiddleware` valida el JWT y obtiene el usuario autenticado.
+2. La ruta valida que el carrito no este vacio, que no haya duplicados y que el envio sea valido.
+3. Se abre una transaccion con `BEGIN`.
+4. Cada producto se consulta con `SELECT ... FOR UPDATE`, bloqueando sus filas durante la operacion.
+5. El backend comprueba el stock y calcula el total usando los precios de PostgreSQL, no los enviados por el cliente.
+6. Se insertan la orden en `orders` y sus items en `order_items`.
+7. Se descuenta el stock y se ejecuta `COMMIT`.
+8. Cualquier error ejecuta `ROLLBACK`, evitando ordenes parciales o inventario inconsistente.
+
+El sistema no integra un proveedor de pagos: la confirmacion representa una orden creada correctamente, no un cobro real.
+
+## Prueba automatizada del flujo
+
+Con el backend activo y un usuario existente:
+
+```bash
+TEST_EMAIL=demo@example.com TEST_PASSWORD=demo-password-123 ./test-flow.sh
+```
+
+El script hace login, obtiene un producto y ejecuta un checkout completo.
+
+## Endpoints principales
+
+- `POST /register` - Registro de usuario
+- `POST /login` - Login y JWT
+- `GET /products` - Catalogo
+- `POST /products` - Crear producto, solo admin
+- `PUT /products/:id` - Editar producto, solo admin
+- `DELETE /products/:id` - Desactivar producto, solo admin
+- `POST /checkout` - Crear una orden autenticada
+- `GET /orders` - Historial del usuario autenticado
+- `GET /orders/:id` - Detalle de una orden propia
+- `GET /admin/orders` - Gestion de ordenes, solo admin
+- `GET /admin/users` - Gestion de usuarios, solo admin
+
+## Estructura
+
+```text
+backend/
+  index.js          API Express y reglas de negocio
+  db.js             Pool de PostgreSQL
+  migrations.sql    Tablas e indices
+  seed.sql          Datos de demostracion
+frontend/
+  src/App.tsx       Estado principal y flujo de checkout
+  src/components/   Catalogo, carrito, checkout y administracion
+docs/screenshots/   Capturas opcionales para la demo
+test-flow.sh        Prueba manual automatizada del checkout
+```
+
+## Seguridad
+
+- `backend/.env` contiene secretos locales y esta excluido por `.gitignore`.
+- Si una credencial fue publicada anteriormente, debe revocarse y regenerarse aunque ya se haya eliminado del archivo.
+- El checkout valida stock y calcula precios en el servidor.
