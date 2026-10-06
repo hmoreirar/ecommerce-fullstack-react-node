@@ -13,6 +13,13 @@
     "nodemon": "^3.1.14"
   },
   "scripts": {
-    "dev": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/migrate.js --seed",
+    "make-admin": "node scripts/make-admin.js"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
