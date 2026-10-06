@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import type { Order } from '../types'
 import { currencyFormatter } from '../utils'
+import { useToast } from '../context/ToastContext'
 
 type OrderHistoryProps = {
   onBack: () => void
@@ -20,18 +21,26 @@ export default function OrderHistory({ onBack }: OrderHistoryProps) {
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const { addToast } = useToast()
 
   useEffect(() => {
     axios.get('/orders')
       .then((response) => setOrders(response.data))
+      .catch((err) => {
+        console.error(err)
+        addToast('Error al cargar tus órdenes', 'error')
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }, [addToast])
 
   async function showOrderDetail(orderId: number) {
     setLoadingDetail(true)
     try {
       const response = await axios.get(`/orders/${orderId}`)
       setSelectedOrder(response.data)
+    } catch (err) {
+      console.error(err)
+      addToast('Error al cargar el detalle de la orden', 'error')
     } finally {
       setLoadingDetail(false)
     }

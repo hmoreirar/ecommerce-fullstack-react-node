@@ -9,8 +9,21 @@ const app = express();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+// Detras de un proxy (Render, nginx, etc.) una sola capa:
+// necesario para que el rate limiting use la IP real del cliente.
+app.set('trust proxy', 1);
+
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   throw new Error('JWT_SECRET debe existir y tener al menos 32 caracteres');
+}
+
+// Error de negocio: su mensaje es seguro de mostrar al cliente.
+// Cualquier otro error se responde con un mensaje generico.
+class CheckoutError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CheckoutError';
+  }
 }
 
 function normalizeTags(tags) {
@@ -329,11 +342,11 @@ app.post('/checkout', authMiddleware, async (req, res) => {
       );
 
       if (product.rows.length === 0) {
-        throw new Error(`Producto ${item.id} no encontrado`);
+        throw new CheckoutError(`Producto ${item.id} no encontrado`);
       }
 
       if (product.rows[0].stock < item.quantity) {
-        throw new Error(`Stock insuficiente para ${item.name}`);
+        throw new CheckoutError(`Stock insuficiente para ${item.name}`);
       }
 
       total += product.rows[0].price * item.quantity;
@@ -380,9 +393,16 @@ app.post('/checkout', authMiddleware, async (req, res) => {
     });
 
   } catch (err) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      console.error(rollbackErr);
+    }
     console.error(err);
-    res.status(400).json({ error: err.message || 'Error en checkout' });
+    if (err instanceof CheckoutError) {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(500).json({ error: 'Error en checkout' });
   } finally {
     client.release();
   }

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import type { User, Order } from '../types'
-import { currencyFormatter } from '../utils'
+import { currencyFormatter, allowedOrderTransitions } from '../utils'
+import { useToast } from '../context/ToastContext'
 
 type AdminDashboardProps = {
   onBack: () => void
@@ -12,12 +13,9 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'users' | 'orders'>('orders')
+  const { addToast } = useToast()
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       const [usersRes, ordersRes] = await Promise.all([
         axios.get('/admin/users'),
@@ -28,26 +26,41 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       setOrders(ordersRes.data)
     } catch (err) {
       console.error(err)
+      addToast('Error al cargar datos de administración', 'error')
     } finally {
       setLoading(false)
     }
-  }
+  }, [addToast])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   async function updateOrderStatus(orderId: number, status: string) {
     try {
       await axios.put(`/admin/orders/${orderId}/status`, { status })
+      addToast(`Orden #${orderId} actualizada a ${status}`, 'success')
       loadData()
     } catch (err) {
       console.error(err)
+      const message = axios.isAxiosError(err) && typeof err.response?.data === 'string'
+        ? err.response.data
+        : 'Error al actualizar la orden'
+      addToast(message, 'error')
     }
   }
 
   async function updateUserRole(userId: number, role: string) {
     try {
       await axios.put(`/admin/users/${userId}/role`, { role })
+      addToast('Rol actualizado', 'success')
       loadData()
     } catch (err) {
       console.error(err)
+      const message = axios.isAxiosError(err) && typeof err.response?.data === 'string'
+        ? err.response.data
+        : 'Error al actualizar el rol'
+      addToast(message, 'error')
     }
   }
 
@@ -121,7 +134,9 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
                         </div>
                       </div>
                       <div style={{display: 'flex', gap: 8}}>
-                        {['pending', 'paid', 'shipped', 'delivered', 'cancelled'].map((status) => (
+                        {['pending', 'paid', 'shipped', 'delivered', 'cancelled']
+                          .filter((status) => status === order.status || (allowedOrderTransitions[order.status] ?? []).includes(status))
+                          .map((status) => (
                           <button
                             key={status}
                             onClick={() => updateOrderStatus(order.id, status)}

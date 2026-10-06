@@ -8,6 +8,7 @@ type LoginFormProps = {
   onPasswordChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
   onRegister: () => void
+  onBackToStore?: () => void
 }
 
 export default function LoginForm({
@@ -18,6 +19,7 @@ export default function LoginForm({
   onPasswordChange,
   onSubmit,
   onRegister,
+  onBackToStore,
 }: LoginFormProps) {
   return (
     <div style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background)'}}>
@@ -71,6 +73,17 @@ export default function LoginForm({
         >
           Crear una cuenta
         </button>
+
+        {onBackToStore && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onBackToStore}
+            style={{ width: '100%', marginTop: 12 }}
+          >
+            Volver a la tienda
+          </button>
+        )}
       </div>
     </div>
   )

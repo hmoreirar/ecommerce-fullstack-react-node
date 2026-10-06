@@ -46,7 +46,9 @@ function App() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
+  const [authIntent, setAuthIntent] = useState<'checkout' | 'orders' | null>(null)
 
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -78,8 +80,6 @@ function App() {
   }, [token, addToast])
 
   useEffect(() => {
-    if (!token) return
-
     const params = new URLSearchParams()
     if (search.trim()) params.set('search', search.trim())
     if (categoryFilter) params.set('category', categoryFilter)
@@ -95,7 +95,7 @@ function App() {
         addToast('Error al cargar productos', 'error')
       })
       .finally(() => setLoadingProducts(false))
-  }, [token, search, categoryFilter, tagFilter, minPrice, maxPrice, addToast])
+  }, [search, categoryFilter, tagFilter, minPrice, maxPrice, addToast])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -138,6 +138,16 @@ function App() {
       localStorage.setItem('token', res.data.token)
       setToken(res.data.token)
       setUserRole(res.data.role || 'client')
+      setPassword('')
+
+      if (authIntent === 'checkout') {
+        setCheckoutStep(2)
+      } else if (authIntent === 'orders') {
+        setShowOrders(true)
+      }
+      setAuthIntent(null)
+      setShowAuth(false)
+      setShowRegister(false)
     } catch (err: unknown) {
       console.error(err)
       addToast(axios.isAxiosError(err) ? err.response?.data || 'Error en login' : 'Error en login', 'error')
@@ -259,16 +269,18 @@ function App() {
   }
 
   function handleAddToCart(product: Product) {
+    const existingItem = cart.find((item) => item.id === product.id)
+    const currentQuantity = existingItem?.quantity || 0
+
+    if (!product.stock || currentQuantity >= product.stock) {
+      addToast('No hay más stock disponible', 'error')
+      return
+    }
+
     setCart((currentCart) => {
-      const existingItem = currentCart.find((item) => item.id === product.id)
-      const currentQuantity = existingItem?.quantity || 0
+      const itemInCart = currentCart.find((item) => item.id === product.id)
 
-      if (!product.stock || currentQuantity >= product.stock) {
-        addToast('No hay más stock disponible', 'error')
-        return currentCart
-      }
-
-      if (existingItem) {
+      if (itemInCart) {
         return currentCart.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
@@ -338,6 +350,31 @@ function App() {
     setToken('')
     setUserRole(null)
     setShowAdmin(false)
+    setShowOrders(false)
+    setShowAuth(false)
+    setAuthIntent(null)
+    setCheckoutStep(1)
+  }
+
+  // El catalogo es publico; checkout e historial requieren sesion.
+  function openAuth(intent: 'checkout' | 'orders' | null) {
+    setAuthIntent(intent)
+    setShowRegister(false)
+    setShowAuth(true)
+  }
+
+  function requireAuth(intent: 'checkout' | 'orders'): boolean {
+    if (token) {
+      return true
+    }
+    openAuth(intent)
+    return false
+  }
+
+  function closeAuth() {
+    setShowAuth(false)
+    setShowRegister(false)
+    setAuthIntent(null)
   }
 
   function clearFilters() {
@@ -350,7 +387,7 @@ function App() {
 
   const isAdmin = userRole === 'admin'
 
-  if (!token) {
+  if (showAuth) {
     if (showRegister) {
       return (
         <RegisterForm
@@ -363,6 +400,7 @@ function App() {
           onConfirmPasswordChange={setConfirmPassword}
           onSubmit={handleRegister}
           onBackToLogin={() => setShowRegister(false)}
+          onBackToStore={closeAuth}
         />
       )
     }
@@ -376,6 +414,7 @@ function App() {
         onPasswordChange={setPassword}
         onSubmit={handleLogin}
         onRegister={() => setShowRegister(true)}
+        onBackToStore={closeAuth}
       />
     )
   }
@@ -453,13 +492,27 @@ function App() {
                 Panel Admin
               </button>
             )}
-            <button className="btn btn-secondary" onClick={() => setShowOrders(true)} type="button">
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                if (requireAuth('orders')) {
+                  setShowOrders(true)
+                }
+              }}
+              type="button"
+            >
               Mis órdenes
             </button>
             <span className="cart-count">{totalItems} {totalItems === 1 ? 'item' : 'items'} en carrito</span>
-            <button className="btn btn-secondary" onClick={handleLogout} type="button">
-              Logout
-            </button>
+            {token ? (
+              <button className="btn btn-secondary" onClick={handleLogout} type="button">
+                Logout
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={() => openAuth(null)} type="button">
+                Ingresar
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -573,7 +626,11 @@ function App() {
               loadingCheckout={loadingCheckout}
               onUpdateQuantity={updateCartItemQuantity}
               onRemoveItem={removeCartItem}
-              onCheckout={() => setCheckoutStep(2)}
+              onCheckout={() => {
+                if (requireAuth('checkout')) {
+                  setCheckoutStep(2)
+                }
+              }}
             />
           </div>
 

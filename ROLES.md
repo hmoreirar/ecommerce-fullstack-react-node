@@ -6,6 +6,10 @@ Se implementó un sistema de roles (admin/cliente) para separar las funcionalida
 
 ## Roles Definidos
 
+### Visitante (sin sesion)
+- Ve el catalogo publico y puede usar el carrito
+- Debe iniciar sesion (o crear cuenta) para finalizar la compra y ver ordenes
+
 ### Admin
 - Acceso completo al panel de administración
 - Puede gestionar productos (crear, editar, eliminar)

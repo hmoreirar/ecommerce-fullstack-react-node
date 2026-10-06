@@ -10,6 +10,7 @@ type RegisterFormProps = {
   onConfirmPasswordChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
   onBackToLogin: () => void
+  onBackToStore?: () => void
 }
 
 export default function RegisterForm({
@@ -22,6 +23,7 @@ export default function RegisterForm({
   onConfirmPasswordChange,
   onSubmit,
   onBackToLogin,
+  onBackToStore,
 }: RegisterFormProps) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background)' }}>
@@ -91,6 +93,17 @@ export default function RegisterForm({
         >
           Volver al login
         </button>
+
+        {onBackToStore && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={onBackToStore}
+            style={{ width: '100%', marginTop: 12 }}
+          >
+            Volver a la tienda
+          </button>
+        )}
       </div>
     </div>
   )

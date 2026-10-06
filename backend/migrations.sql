@@ -1,4 +1,25 @@
--- Agregar campos a tabla products existente
+-- Tablas base (idempotente: funciona en base de datos nueva o existente)
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'client',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS products (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  price DECIMAL(10,2) NOT NULL CHECK (price > 0),
+  stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+  image TEXT,
+  category TEXT NOT NULL DEFAULT 'otros',
+  tags TEXT[] NOT NULL DEFAULT '{}',
+  active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+-- Compatibilidad con instalaciones previas que no tenían estos campos
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'client';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS image TEXT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS active BOOLEAN NOT NULL DEFAULT TRUE;
