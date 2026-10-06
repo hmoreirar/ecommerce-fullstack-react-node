@@ -7,7 +7,7 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
-    releaseCommand: npm run migrate
+    preDeploycommand: npm run migrate # was : releaseCommand
     healthCheckPath: /
     plan: free
     envVars:
@@ -15,7 +15,7 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-        length: 48
+        #length: 48
       - key: DATABASE_URL
         fromDatabase:
           name: nicommerce-db
