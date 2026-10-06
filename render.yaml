@@ -7,7 +7,6 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
-    preDeployCommand: npm run migrate # was : releaseCommand
     healthCheckPath: /
     plan: free
     envVars:
