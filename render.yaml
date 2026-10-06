@@ -1,5 +1,3 @@
-# Blueprint de Render: API + PostgreSQL.
-# Crear desde Render > New > Blueprint (o conectar cada servicio a mano).
 services:
   - type: web
     name: nicommerce-api
@@ -14,16 +12,7 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-        #length: 48
       - key: DATABASE_URL
-        fromDatabase:
-          name: nicommerce-db
-          property: connectionString
-      # Reemplazar con la URL real de Vercel tras el primer deploy.
+        sync: false
       - key: FRONTEND_URL
         value: https://REEMPLAZAR.vercel.app
-
-databases:
-  - name: nicommerce-db
-    plan: free
-    databaseName: ecommerce
