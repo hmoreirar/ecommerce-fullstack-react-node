@@ -26,21 +26,18 @@ export default function RegisterForm({
   onBackToStore,
 }: RegisterFormProps) {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background)' }}>
-      <div style={{ width: '100%', maxWidth: 400, padding: 20 }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: 8 }}>Nicommerce</h1>
-          <p style={{ color: 'var(--color-foreground-light)', fontSize: '0.95rem' }}>
-            Crea tu cuenta de cliente
-          </p>
+    <div className="auth-screen">
+      <div className="auth-card">
+        <div className="auth-card__header">
+          <h1>Nicommerce</h1>
+          <p>Crea tu cuenta de cliente</p>
         </div>
 
-        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600 }}>
-              Email
-            </label>
+        <form className="auth-form" onSubmit={onSubmit}>
+          <div className="field">
+            <label htmlFor="register-email">Email</label>
             <input
+              id="register-email"
               type="email"
               placeholder="tu@email.com"
               value={email}
@@ -50,11 +47,10 @@ export default function RegisterForm({
             />
           </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600 }}>
-              Contraseña
-            </label>
+          <div className="field">
+            <label htmlFor="register-password">Contraseña</label>
             <input
+              id="register-password"
               type="password"
               placeholder="Mínimo 6 caracteres"
               value={password}
@@ -65,11 +61,10 @@ export default function RegisterForm({
             />
           </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600 }}>
-              Repetir contraseña
-            </label>
+          <div className="field">
+            <label htmlFor="register-confirm">Repetir contraseña</label>
             <input
+              id="register-confirm"
               type="password"
               placeholder="Repite tu contraseña"
               value={confirmPassword}
@@ -80,27 +75,17 @@ export default function RegisterForm({
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: 8 }}>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </button>
         </form>
 
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={onBackToLogin}
-          style={{ width: '100%', marginTop: 12 }}
-        >
+        <button type="button" className="btn btn-secondary auth-alt" onClick={onBackToLogin}>
           Volver al login
         </button>
 
         {onBackToStore && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onBackToStore}
-            style={{ width: '100%', marginTop: 12 }}
-          >
+          <button type="button" className="btn btn-secondary auth-alt" onClick={onBackToStore}>
             Volver a la tienda
           </button>
         )}

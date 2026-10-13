@@ -1,47 +1,31 @@
-type Step = {
-  number: number
-  title: string
+type CheckoutStepperProps = {
+  currentStep: number
 }
 
-const steps: Step[] = [
+const steps = [
   { number: 1, title: 'Carrito' },
   { number: 2, title: 'Envío' },
   { number: 3, title: 'Revisión' },
   { number: 4, title: 'Confirmación' },
 ]
 
-type CheckoutStepperProps = {
-  currentStep: number
-}
-
 export default function CheckoutStepper({ currentStep }: CheckoutStepperProps) {
   return (
-    <div style={{display: 'flex', justifyContent: 'center', gap: 32, marginBottom: 32}}>
-      {steps.map((step) => (
-        <div key={step.number} style={{display: 'flex', alignItems: 'center', gap: 8}}>
-          <div style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: currentStep >= step.number ? 'var(--color-accent)' : 'var(--color-border)',
-            color: currentStep >= step.number ? '#fff' : 'var(--color-foreground-light)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '0.875rem'
-          }}>
-            {step.number}
+    <div className="checkout-stepper">
+      {steps.map((step) => {
+        const state = currentStep > step.number
+          ? 'checkout-step--done'
+          : currentStep === step.number
+            ? 'checkout-step--active'
+            : ''
+
+        return (
+          <div key={step.number} className={`checkout-step ${state}`}>
+            <div className="checkout-step__number">{step.number}</div>
+            <span className="checkout-step__label">{step.title}</span>
           </div>
-          <span style={{
-            color: currentStep >= step.number ? 'var(--color-foreground)' : 'var(--color-foreground-light)',
-            fontSize: '0.875rem',
-            fontWeight: currentStep === step.number ? 600 : 400
-          }}>
-            {step.title}
-          </span>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

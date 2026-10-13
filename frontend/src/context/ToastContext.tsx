@@ -30,22 +30,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="toast-list">
         {toasts.map((toast) => (
           <div
             key={toast.id}
+            className={`toast toast--${toast.type}`}
             onClick={() => removeToast(toast.id)}
-            style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              animation: 'slideIn 0.3s ease',
-              background:
-                toast.type === 'success' ? '#22c55e' : toast.type === 'error' ? '#ef4444' : '#3b82f6',
-            }}
           >
             {toast.message}
           </div>

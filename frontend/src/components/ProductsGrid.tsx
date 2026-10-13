@@ -13,7 +13,6 @@ export default function ProductsGrid({ products, isAdmin, onAddToCart, onDeleteP
   if (products.length === 0) {
     return (
       <div className="empty-state">
-        <div className="empty-state__icon">✦</div>
         <p className="empty-state__title">No encontramos productos</p>
         {isAdmin && (
           <p className="empty-state__description">Agrega tu primer producto usando el formulario de arriba.</p>

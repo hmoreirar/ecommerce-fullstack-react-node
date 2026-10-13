@@ -9,13 +9,20 @@ type ShippingFormProps = {
 
 export default function ShippingForm({ shipping, onChange, onSubmit, onBack }: ShippingFormProps) {
   return (
-    <div style={{maxWidth: 600, margin: '0 auto'}}>
-      <h2 style={{marginBottom: 24}}>Datos de Envío</h2>
-      
-      <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-        <div>
-          <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Dirección</label>
+    <div className="checkout-panel">
+      <h2>Datos de Envío</h2>
+
+      <form
+        className="checkout-form"
+        onSubmit={(e) => {
+          e.preventDefault()
+          onSubmit()
+        }}
+      >
+        <div className="field">
+          <label htmlFor="shipping-address">Dirección</label>
           <input
+            id="shipping-address"
             type="text"
             value={shipping.address}
             onChange={(e) => onChange('address', e.target.value)}
@@ -23,11 +30,12 @@ export default function ShippingForm({ shipping, onChange, onSubmit, onBack }: S
             required
           />
         </div>
-        
-        <div className="shipping-fields" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-          <div>
-            <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Ciudad</label>
+
+        <div className="shipping-fields">
+          <div className="field">
+            <label htmlFor="shipping-city">Ciudad</label>
             <input
+              id="shipping-city"
               type="text"
               value={shipping.city}
               onChange={(e) => onChange('city', e.target.value)}
@@ -35,10 +43,11 @@ export default function ShippingForm({ shipping, onChange, onSubmit, onBack }: S
               required
             />
           </div>
-          
-          <div>
-            <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Código Postal</label>
+
+          <div className="field">
+            <label htmlFor="shipping-postal">Código Postal</label>
             <input
+              id="shipping-postal"
               type="text"
               value={shipping.postalCode}
               onChange={(e) => onChange('postalCode', e.target.value)}
@@ -47,10 +56,11 @@ export default function ShippingForm({ shipping, onChange, onSubmit, onBack }: S
             />
           </div>
         </div>
-        
-        <div>
-          <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Teléfono</label>
+
+        <div className="field">
+          <label htmlFor="shipping-phone">Teléfono</label>
           <input
+            id="shipping-phone"
             type="tel"
             value={shipping.phone}
             onChange={(e) => onChange('phone', e.target.value)}
@@ -58,8 +68,8 @@ export default function ShippingForm({ shipping, onChange, onSubmit, onBack }: S
             required
           />
         </div>
-        
-        <div style={{display: 'flex', gap: 12, marginTop: 16}}>
+
+        <div className="form-actions">
           <button type="button" className="btn btn-secondary" onClick={onBack}>Volver</button>
           <button type="submit" className="btn btn-primary">Continuar a Revisión</button>
         </div>

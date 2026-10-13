@@ -48,43 +48,59 @@ export default function OrderHistory({ onBack }: OrderHistoryProps) {
 
   return (
     <main className="main-content">
-      <div className="container order-history">
+      <div className="container">
         <div className="section-header">
           <div>
             <h1>Mis órdenes</h1>
-            <p style={{ color: 'var(--color-foreground-light)' }}>Consulta el estado de tus compras.</p>
+            <p className="section-description">Consulta el estado de tus compras.</p>
           </div>
-          <button className="btn btn-secondary" onClick={onBack} type="button">Volver a la tienda</button>
+          <button type="button" className="btn btn-secondary" onClick={onBack}>
+            Volver a la tienda
+          </button>
         </div>
 
-        {loading ? <p>Cargando órdenes...</p> : orders.length === 0 ? (
-          <p style={{ color: 'var(--color-foreground-light)' }}>Todavía no tienes órdenes.</p>
+        {loading ? (
+          <p className="section-description">Cargando órdenes...</p>
+        ) : orders.length === 0 ? (
+          <p className="section-description">Todavía no tienes órdenes.</p>
         ) : (
           <div className="orders-list">
             {orders.map((order) => (
               <article className="order-card" key={order.id}>
                 <div>
                   <strong>Orden #{order.id}</strong>
-                  <p style={{ color: 'var(--color-foreground-light)' }}>
+                  <p className="order-card__meta">
                     {new Date(order.created_at).toLocaleDateString('es-CL')}
                   </p>
                 </div>
-                <span className="badge">{statusLabels[order.status] || order.status}</span>
-                <strong>{currencyFormatter.format(order.total)}</strong>
-                <button className="btn btn-secondary" onClick={() => showOrderDetail(order.id)} type="button">
-                  Ver detalle
-                </button>
+                <div className="order-card__side">
+                  <span className={`status-pill ${order.status === 'delivered' ? 'status-pill--filled' : ''}`}>
+                    {statusLabels[order.status] || order.status}
+                  </span>
+                  <strong className="order-card__total">
+                    {currencyFormatter.format(order.total)}
+                  </strong>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => showOrderDetail(order.id)}
+                  >
+                    Ver detalle
+                  </button>
+                </div>
               </article>
             ))}
           </div>
         )}
 
-        {loadingDetail && <p style={{ marginTop: 24 }}>Cargando detalle...</p>}
+        {loadingDetail && <p className="section-description">Cargando detalle...</p>}
         {selectedOrder && (
           <section className="order-detail">
             <div className="section-header">
               <h2>Orden #{selectedOrder.id}</h2>
-              <button className="btn btn-secondary" onClick={() => setSelectedOrder(null)} type="button">Cerrar</button>
+              <button type="button" className="btn btn-secondary" onClick={() => setSelectedOrder(null)}>
+                Cerrar
+              </button>
             </div>
             {selectedOrder.items?.map((item) => (
               <div className="order-detail__item" key={item.product_id}>

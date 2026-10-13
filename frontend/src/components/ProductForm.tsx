@@ -38,10 +38,35 @@ export default function ProductForm({
   onSubmit,
 }: ProductFormProps) {
   return (
-    <form className="product-form" onSubmit={onSubmit} style={{display: 'grid', gridTemplateColumns: '1fr 140px 120px 1fr 150px 1fr auto auto', gap: 12, marginBottom: 24, alignItems: 'end'}}>
-      <div>
-        <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Stock</label>
+    <form className="product-form" onSubmit={onSubmit}>
+      <div className="field">
+        <label htmlFor="product-name">Nombre</label>
         <input
+          id="product-name"
+          type="text"
+          placeholder="Nombre del producto"
+          value={name}
+          onChange={(event) => onNameChange(event.target.value)}
+          className="form-input"
+        />
+      </div>
+
+      <div className="field">
+        <label htmlFor="product-price">Precio</label>
+        <input
+          id="product-price"
+          type="number"
+          placeholder="0"
+          value={price}
+          onChange={(event) => onPriceChange(event.target.value)}
+          className="form-input"
+        />
+      </div>
+
+      <div className="field">
+        <label htmlFor="product-stock">Stock</label>
+        <input
+          id="product-stock"
           type="number"
           min="0"
           placeholder="0"
@@ -52,11 +77,12 @@ export default function ProductForm({
         />
       </div>
 
-      <div>
-        <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Categoría</label>
+      <div className="field">
+        <label htmlFor="product-category">Categoría</label>
         <input
+          id="product-category"
           type="text"
-          placeholder="camisetas"
+          placeholder="audio"
           value={category}
           onChange={(event) => onCategoryChange(event.target.value)}
           className="form-input"
@@ -64,9 +90,10 @@ export default function ProductForm({
         />
       </div>
 
-      <div>
-        <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Etiquetas</label>
+      <div className="field">
+        <label htmlFor="product-tags">Etiquetas</label>
         <input
+          id="product-tags"
           type="text"
           placeholder="casual, verano"
           value={tags}
@@ -75,31 +102,10 @@ export default function ProductForm({
         />
       </div>
 
-      <div>
-        <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Nombre</label>
+      <div className="field">
+        <label htmlFor="product-image">Imagen URL</label>
         <input
-          type="text"
-          placeholder="Nombre del producto"
-          value={name}
-          onChange={(event) => onNameChange(event.target.value)}
-          className="form-input"
-        />
-      </div>
-
-      <div>
-        <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Precio</label>
-        <input
-          type="number"
-          placeholder="0"
-          value={price}
-          onChange={(event) => onPriceChange(event.target.value)}
-          className="form-input"
-        />
-      </div>
-
-      <div>
-        <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>Imagen URL</label>
-        <input
+          id="product-image"
           type="text"
           placeholder="https://..."
           value={image}
@@ -108,10 +114,14 @@ export default function ProductForm({
         />
       </div>
 
-      <button type="submit" className="btn btn-primary" disabled={loading} style={{height: 42}}>
+      <button type="submit" className="btn btn-primary" disabled={loading}>
         {loading ? '...' : editing ? 'Guardar' : 'Agregar'}
       </button>
-      {editing && <button type="button" className="btn btn-secondary" onClick={onCancelEdit}>Cancelar</button>}
+      {editing && (
+        <button type="button" className="btn btn-secondary" onClick={onCancelEdit}>
+          Cancelar
+        </button>
+      )}
     </form>
   )
 }

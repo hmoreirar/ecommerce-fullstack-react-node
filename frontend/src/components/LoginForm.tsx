@@ -22,21 +22,18 @@ export default function LoginForm({
   onBackToStore,
 }: LoginFormProps) {
   return (
-    <div style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-background)'}}>
-      <div style={{width: '100%', maxWidth: 400, padding: 20}}>
-        <div style={{textAlign: 'center', marginBottom: 32}}>
-          <h1 style={{fontSize: '1.75rem', marginBottom: 8}}>Nicommerce</h1>
-          <p style={{color: 'var(--color-foreground-light)', fontSize: '0.95rem'}}>
-            Ingresa a tu panel de tienda
-          </p>
+    <div className="auth-screen">
+      <div className="auth-card">
+        <div className="auth-card__header">
+          <h1>Nicommerce</h1>
+          <p>Ingresa a tu cuenta</p>
         </div>
 
-        <form onSubmit={onSubmit} style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-          <div>
-            <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>
-              Email
-            </label>
+        <form className="auth-form" onSubmit={onSubmit}>
+          <div className="field">
+            <label htmlFor="login-email">Email</label>
             <input
+              id="login-email"
               type="email"
               placeholder="tu@email.com"
               value={email}
@@ -46,13 +43,12 @@ export default function LoginForm({
             />
           </div>
 
-          <div>
-            <label style={{display: 'block', marginBottom: 6, fontSize: '0.875rem', fontWeight: 600}}>
-              Password
-            </label>
+          <div className="field">
+            <label htmlFor="login-password">Password</label>
             <input
+              id="login-password"
               type="password"
-              placeholder="••••••"
+              placeholder="Tu contraseña"
               value={password}
               onChange={(event) => onPasswordChange(event.target.value)}
               className="form-input"
@@ -60,27 +56,17 @@ export default function LoginForm({
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading} style={{marginTop: 8}}>
+          <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
 
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={onRegister}
-          style={{ width: '100%', marginTop: 12 }}
-        >
+        <button type="button" className="btn btn-secondary auth-alt" onClick={onRegister}>
           Crear una cuenta
         </button>
 
         {onBackToStore && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onBackToStore}
-            style={{ width: '100%', marginTop: 12 }}
-          >
+          <button type="button" className="btn btn-secondary auth-alt" onClick={onBackToStore}>
             Volver a la tienda
           </button>
         )}

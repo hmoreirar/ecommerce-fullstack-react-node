@@ -1,4 +1,5 @@
 import type { Product } from '../types'
+import { currencyFormatter } from '../utils'
 
 type ProductCardProps = {
   product: Product
@@ -36,11 +37,7 @@ export default function ProductCard({
           </div>
         )}
         <p className="product-card__price">
-          {new Intl.NumberFormat('es-CL', {
-            style: 'currency',
-            currency: 'CLP',
-            maximumFractionDigits: 0,
-          }).format(product.price)}
+          {currencyFormatter.format(product.price)}
         </p>
         <p className="product-card__stock">
           {product.stock && product.stock > 0 ? `${product.stock} disponibles` : 'Agotado'}

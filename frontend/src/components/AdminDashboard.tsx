@@ -8,6 +8,8 @@ type AdminDashboardProps = {
   onBack: () => void
 }
 
+const allStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled']
+
 export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [users, setUsers] = useState<User[]>([])
   const [orders, setOrders] = useState<Order[]>([])
@@ -66,28 +68,27 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
   return (
     <div>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24}}>
-        <h1>Panel de Administración</h1>
-        <button className="btn btn-secondary" onClick={onBack}>Volver a Tienda</button>
+      <div className="section-header">
+        <div>
+          <h1>Panel de Administración</h1>
+          <p className="section-description">Gestiona órdenes, usuarios y roles.</p>
+        </div>
+        <button type="button" className="btn btn-secondary" onClick={onBack}>
+          Volver a Tienda
+        </button>
       </div>
 
-      <div style={{display: 'flex', gap: 12, marginBottom: 24}}>
+      <div className="admin-tabs">
         <button
-          className="btn"
-          style={{
-            background: activeTab === 'orders' ? 'var(--color-accent)' : 'var(--color-surface)',
-            color: activeTab === 'orders' ? '#fff' : 'var(--color-foreground)'
-          }}
+          type="button"
+          className={`btn ${activeTab === 'orders' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('orders')}
         >
           Órdenes ({orders.length})
         </button>
         <button
-          className="btn"
-          style={{
-            background: activeTab === 'users' ? 'var(--color-accent)' : 'var(--color-surface)',
-            color: activeTab === 'users' ? '#fff' : 'var(--color-foreground)'
-          }}
+          type="button"
+          className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => setActiveTab('users')}
         >
           Usuarios ({users.length})
@@ -95,106 +96,85 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       </div>
 
       {loading ? (
-        <div style={{textAlign: 'center', padding: 60}}>Cargando...</div>
+        <div className="loading-container">Cargando...</div>
       ) : (
         <>
           {activeTab === 'orders' && (
-            <div>
+            <div className="admin-list">
               {orders.length === 0 ? (
-                <p style={{color: 'var(--color-foreground-light)'}}>No hay órdenes aún</p>
+                <p className="section-description">No hay órdenes aún.</p>
               ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: 12}}>
-                  {orders.map((order) => (
-                    <div key={order.id} style={{padding: 16, border: '1px solid var(--color-border)', borderRadius: 8, background: 'var(--color-surface)'}}>
-                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8}}>
-                        <div>
-                          <strong>Orden #{order.id}</strong>
-                          <p style={{fontSize: '0.875rem', color: 'var(--color-foreground-light)'}}>
-                            {order.email} • {new Date(order.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
-                          <span style={{
-                            padding: '4px 12px',
-                            borderRadius: 20,
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            background: order.status === 'pending' ? '#fff3cd' : 
-                                       order.status === 'shipped' ? '#d1ecf1' :
-                                       order.status === 'delivered' ? '#d4edda' : '#f8d7da',
-                            color: order.status === 'pending' ? '#856404' :
-                                     order.status === 'shipped' ? '#0c5460' :
-                                     order.status === 'delivered' ? '#155724' : '#721c24'
-                          }}>
-                            {order.status}
-                          </span>
-                          <span style={{fontWeight: 700, color: 'var(--color-accent)'}}>
-                            {currencyFormatter.format(order.total)}
-                          </span>
-                        </div>
+                orders.map((order) => (
+                  <div key={order.id} className="admin-order-block">
+                    <div className="admin-row">
+                      <div className="admin-row__main">
+                        <strong>Orden #{order.id}</strong>
+                        <span className="admin-row__meta">
+                          {order.email} · {new Date(order.created_at).toLocaleDateString('es-CL')}
+                        </span>
                       </div>
-                      <div style={{display: 'flex', gap: 8}}>
-                        {['pending', 'paid', 'shipped', 'delivered', 'cancelled']
-                          .filter((status) => status === order.status || (allowedOrderTransitions[order.status] ?? []).includes(status))
-                          .map((status) => (
+                      <div className="admin-row__side">
+                        <span className={`status-pill ${order.status === 'delivered' ? 'status-pill--filled' : ''}`}>
+                          {order.status}
+                        </span>
+                        <span className="order-card__total">
+                          {currencyFormatter.format(order.total)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="admin-status-actions">
+                      {allStatuses
+                        .filter((status) => status === order.status || (allowedOrderTransitions[order.status] ?? []).includes(status))
+                        .map((status) => (
                           <button
                             key={status}
+                            type="button"
+                            className={`btn ${status === order.status ? 'btn-primary' : 'btn-secondary'}`}
+                            disabled={status === order.status}
                             onClick={() => updateOrderStatus(order.id, status)}
-                            disabled={order.status === status}
-                            style={{
-                              padding: '6px 12px',
-                              border: order.status === status ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                              borderRadius: 4,
-                              background: order.status === status ? 'var(--color-accent)' : 'transparent',
-                              color: order.status === status ? '#fff' : 'var(--color-foreground)',
-                              fontSize: '0.8rem',
-                              cursor: order.status === status ? 'not-allowed' : 'pointer',
-                              opacity: order.status === status ? 0.7 : 1
-                            }}
                           >
                             {status}
                           </button>
                         ))}
-                      </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))
               )}
             </div>
           )}
 
           {activeTab === 'users' && (
-            <div>
+            <div className="admin-list">
               {users.length === 0 ? (
-                <p style={{color: 'var(--color-foreground-light)'}}>No hay usuarios</p>
+                <p className="section-description">No hay usuarios.</p>
               ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
-                  {users.map((user) => (
-                    <div key={user.id} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, border: '1px solid var(--color-border)', borderRadius: 8}}>
+                users.map((user) => (
+                  <div key={user.id} className="admin-row">
+                    <div className="admin-row__main">
                       <div>
                         <strong>{user.email}</strong>
-                        <span style={{
-                          marginLeft: 8,
-                          padding: '2px 8px',
-                          borderRadius: 12,
-                          fontSize: '0.75rem',
-                          background: user.role === 'admin' ? 'var(--color-accent)' : 'var(--color-surface)',
-                          color: user.role === 'admin' ? '#fff' : 'var(--color-foreground)'
-                        }}>
+                        <span className={`role-pill ${user.role === 'admin' ? 'role-pill--admin' : ''}`}>
                           {user.role}
                         </span>
                       </div>
+                      <span className="admin-row__meta">
+                        id {user.id}
+                      </span>
+                    </div>
+                    <div className="admin-row__side">
                       <select
+                        className="role-select"
                         value={user.role}
                         onChange={(e) => updateUserRole(user.id, e.target.value)}
-                        style={{padding: 6, borderRadius: 4, border: '1px solid var(--color-border)'}}
+                        aria-label={`Rol de ${user.email}`}
                       >
                         <option value="client">Client</option>
                         <option value="admin">Admin</option>
                       </select>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))
               )}
             </div>
           )}

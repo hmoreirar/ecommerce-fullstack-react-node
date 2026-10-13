@@ -14,7 +14,6 @@ import ConfirmDialog from './components/ConfirmDialog'
 import AdminDashboard from './components/AdminDashboard'
 import OrderHistory from './components/OrderHistory'
 import Spinner from './components/Spinner'
-import ThemeToggle from './components/ThemeToggle'
 import { useToast } from './context/ToastContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -27,9 +26,6 @@ function App() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [token, setToken] = useState(localStorage.getItem('token') || '')
   const [userRole, setUserRole] = useState<'admin' | 'client' | null>(null)
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => (
-    localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'
-  ))
 
   const [products, setProducts] = useState<Product[]>([])
   const [loadingProducts, setLoadingProducts] = useState(false)
@@ -96,15 +92,6 @@ function App() {
       })
       .finally(() => setLoadingProducts(false))
   }, [search, categoryFilter, tagFilter, minPrice, maxPrice, addToast])
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    localStorage.setItem('theme', theme)
-  }, [theme])
-
-  function toggleTheme() {
-    setTheme((currentTheme) => currentTheme === 'light' ? 'dark' : 'light')
-  }
 
   useEffect(() => {
     try {
@@ -433,7 +420,6 @@ function App() {
         <header className="site-header">
           <div className="container header-wrapper">
             <a href="/" className="header-logo"><span className="header-logo__mark">N</span> Nicommerce</a>
-            <ThemeToggle theme={theme} onToggleTheme={toggleTheme} />
           </div>
         </header>
 
@@ -482,12 +468,11 @@ function App() {
         <div className="container header-wrapper">
           <a href="/" className="header-logo"><span className="header-logo__mark">N</span> Nicommerce</a>
           <div className="header-actions">
-            <ThemeToggle theme={theme} onToggleTheme={toggleTheme} />
             {isAdmin && (
               <button
                 className="btn btn-secondary"
                 onClick={() => setShowAdmin(true)}
-                style={{ fontSize: '0.875rem' }}
+                type="button"
               >
                 Panel Admin
               </button>
